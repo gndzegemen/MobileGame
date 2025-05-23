@@ -474,9 +474,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ElementNumber: 18
-  GridElement: {fileID: 8355799504583605116, guid: 4ae764791732d6f40a125cd2f25ee29e, type: 3}
+  GridElementPrefab: {fileID: 8355799504583605116, guid: 4ae764791732d6f40a125cd2f25ee29e, type: 3}
   Parent: {fileID: 8689662085525862960}
-  GridElements: []
 --- !u!114 &3436474768627168354
 MonoBehaviour:
   m_ObjectHideFlags: 0
