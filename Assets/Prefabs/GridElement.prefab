@@ -17,7 +17,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &3158629556093846847
 RectTransform:
   m_ObjectHideFlags: 0
@@ -271,11 +271,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ID: 
+  memoryGame: {fileID: 0}
   button: {fileID: 2274537106961839975}
-  waitingTime: 3
   Front: {fileID: 9195526605882287561}
   Back: {fileID: 7905875995551816261}
   Empty: {fileID: 2158460046492774846}
+  isReveal: 0
+  CurrentState: 0
 --- !u!1 &9195526605882287561
 GameObject:
   m_ObjectHideFlags: 0
@@ -293,7 +295,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2052021005046557202
 RectTransform:
   m_ObjectHideFlags: 0
