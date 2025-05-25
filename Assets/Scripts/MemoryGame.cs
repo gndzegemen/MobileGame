@@ -38,11 +38,8 @@ public class MemoryGame : MonoBehaviour
     private Coroutine firstRevealTimeoutCoroutine;
     private Coroutine dealingCoroutine;
 
-
-
     public void SetupGame()
     {
-
         idList.Clear();
         cards.Clear();
         revealCards.Clear();
@@ -54,6 +51,11 @@ public class MemoryGame : MonoBehaviour
             firstRevealTimeoutCoroutine = null;
         }
 
+        if (dealingCoroutine != null)
+        {
+            StopCoroutine(dealingCoroutine);
+            dealingCoroutine = null;
+        }
 
         GenerateIDPairs();
         Shuffle(idList);
@@ -155,10 +157,9 @@ public class MemoryGame : MonoBehaviour
         yield return new WaitUntil(() => animationComplete);
     }
 
-
     public void RegisterReveal(GridElement card)
     {
-        if (!canReveal || card.isReveal) return;
+        if (!canReveal || card.isReveal || dealingCoroutine != null) return;
 
         card.ChangeStatusAsFront();
         card.isReveal = true;
@@ -221,7 +222,7 @@ public class MemoryGame : MonoBehaviour
             cards.Remove(first);
             cards.Remove(second);
 
-            if(cards.Count == 0)
+            if (cards.Count == 0)
             {
                 MainPage.gameObject.SetActive(false);
                 FinishPage.gameObject.SetActive(true);
@@ -247,6 +248,19 @@ public class MemoryGame : MonoBehaviour
 
     public void ResetGame()
     {
+        // Çalışan coroutine'leri durdur
+        if (dealingCoroutine != null)
+        {
+            StopCoroutine(dealingCoroutine);
+            dealingCoroutine = null;
+        }
+
+        if (firstRevealTimeoutCoroutine != null)
+        {
+            StopCoroutine(firstRevealTimeoutCoroutine);
+            firstRevealTimeoutCoroutine = null;
+        }
+
         // Sahnedeki eski kartları temizle
         foreach (Transform child in Parent)
             Destroy(child.gameObject);
@@ -254,6 +268,4 @@ public class MemoryGame : MonoBehaviour
         // Yeniden kurulum
         SetupGame();
     }
-
-
 }
