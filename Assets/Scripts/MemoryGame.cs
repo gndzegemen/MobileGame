@@ -16,7 +16,8 @@ public class MemoryGame : MonoBehaviour
     [Header("Animasyon Ayarları")]
     [Tooltip("Deste nesnesinin RectTransform'u")]
     public RectTransform deckTransform;
-    public RectTransform dealCard;
+    public GameObject dealCardPrefab;
+    public RectTransform dealCardTransform;
     [Tooltip("Bir karta gitmesi gereken süre")]
     public float dealDuration = 0.5f;
     [Tooltip("Kartlar arası gecikme (s)")]
@@ -36,7 +37,6 @@ public class MemoryGame : MonoBehaviour
     public GameObject FinishPage;
 
     private Coroutine firstRevealTimeoutCoroutine;
-    private Coroutine dealingCoroutine;
 
     public void SetupGame()
     {
@@ -51,11 +51,7 @@ public class MemoryGame : MonoBehaviour
             firstRevealTimeoutCoroutine = null;
         }
 
-        if (dealingCoroutine != null)
-        {
-            StopCoroutine(dealingCoroutine);
-            dealingCoroutine = null;
-        }
+        
 
         GenerateIDPairs();
         Shuffle(idList);
@@ -96,70 +92,11 @@ public class MemoryGame : MonoBehaviour
             cards.Add(element);
         }
 
-        // Animasyonu başlat
-        dealingCoroutine = StartCoroutine(DealCardsSequentially());
-    }
-
-    IEnumerator DealCardsSequentially()
-    {
-        // Tüm kartları sırasıyla dağıt
-        for (int i = 0; i < cards.Count; i++)
-        {
-            yield return StartCoroutine(DealSingleCard(cards[i]));
-            yield return new WaitForSeconds(dealStagger);
-        }
-
-        // Tüm kartlar dağıtıldıktan sonra biraz bekle, sonra back'e çevir
-        yield return new WaitForSeconds(1f);
-
-        // Tüm kartları back durumuna çevir
-        foreach (var card in cards)
-        {
-            card.ChangeStatusAsBack();
-            card.isReveal = false;
-            card.CurrentState = GridElement.State.Back;
-        }
-
-        dealingCoroutine = null;
-    }
-
-    IEnumerator DealSingleCard(GridElement targetCard)
-    {
-        // Hedef pozisyonu al
-        var targetTransform = targetCard.GetComponent<RectTransform>();
-        var targetPos = targetTransform.localPosition;
-
-        // DealCard'ı deste pozisyonuna getir ve aktif et
-        dealCard.gameObject.SetActive(true);
-        dealCard.localPosition = deckTransform.localPosition;
-
-        // Animasyon tamamlandığını beklemek için bir flag
-        bool animationComplete = false;
-
-        // Animasyonu başlat
-        dealCard
-            .DOLocalMove(targetPos, dealDuration)
-            .SetEase(Ease.OutBack)
-            .OnComplete(() =>
-            {
-                // Animasyon bittiğinde dealCard'ı gizle
-                dealCard.gameObject.SetActive(false);
-
-                // Hedef kartı front durumuna getir
-                targetCard.ChangeStatusAsFront();
-                targetCard.isReveal = true;
-                targetCard.CurrentState = GridElement.State.Front;
-
-                animationComplete = true;
-            });
-
-        // Animasyonun bitmesini bekle
-        yield return new WaitUntil(() => animationComplete);
     }
 
     public void RegisterReveal(GridElement card)
     {
-        if (!canReveal || card.isReveal || dealingCoroutine != null) return;
+        if (!canReveal || card.isReveal) return;
 
         card.ChangeStatusAsFront();
         card.isReveal = true;
@@ -248,13 +185,6 @@ public class MemoryGame : MonoBehaviour
 
     public void ResetGame()
     {
-        // Çalışan coroutine'leri durdur
-        if (dealingCoroutine != null)
-        {
-            StopCoroutine(dealingCoroutine);
-            dealingCoroutine = null;
-        }
-
         if (firstRevealTimeoutCoroutine != null)
         {
             StopCoroutine(firstRevealTimeoutCoroutine);
