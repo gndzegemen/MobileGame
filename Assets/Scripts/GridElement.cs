@@ -22,7 +22,6 @@ public class GridElement : MonoBehaviour
     void Start()
     {
         button.onClick.AddListener(OnClick);
-        ChangeStatusAsBack();
     }
 
     void OnClick()

@@ -15,9 +15,10 @@ public class MemoryGame : MonoBehaviour
 
     [Header("Animasyon Ayarları")]
     [Tooltip("Deste nesnesinin RectTransform'u")]
-    public RectTransform deckTransform;
-    public GameObject dealCardPrefab;
+
     public RectTransform dealCardTransform;
+    public RectTransform dealCardTransformInit;
+    public RectTransform deckTransform;
     [Tooltip("Bir karta gitmesi gereken süre")]
     public float dealDuration = 0.5f;
     [Tooltip("Kartlar arası gecikme (s)")]
@@ -36,7 +37,14 @@ public class MemoryGame : MonoBehaviour
     public GameObject MainPage;
     public GameObject FinishPage;
 
+    public GameObject ResetButton;
+
     private Coroutine firstRevealTimeoutCoroutine;
+
+    private void Start()
+    {
+        dealCardTransformInit = dealCardTransform;
+    }
 
     public void SetupGame()
     {
@@ -92,7 +100,45 @@ public class MemoryGame : MonoBehaviour
             cards.Add(element);
         }
 
+        //deckTransform.gameObject.SetActive(true);
+        //ResetButton.SetActive(false);
+        //dealCardTransform.gameObject.SetActive(true);
+
+        DealAnimation();
     }
+
+    void DealAnimation()
+    {
+        Sequence seq = DOTween.Sequence();
+
+        for (int i = 0; i < cards.Count; i++)
+        {
+            int index = i; // Closure için gerekli
+            RectTransform cardRect = cards[i].GetComponent<RectTransform>();
+
+            seq.AppendCallback(() => {
+                // Deste pozisyonundan kart pozisyonuna git
+                dealCardTransform.position = deckTransform.position;
+                dealCardTransform.DOMove(cardRect.position, dealDuration)
+                    .OnComplete(() => {
+                        // Kart görünür hale getir
+                        cards[index].ChangeStatusAsBack();
+                    });
+            });
+
+            seq.AppendInterval(dealDuration + dealStagger);
+        }
+
+        seq.OnComplete(() => {
+            deckTransform.gameObject.SetActive(false);
+            ResetButton.SetActive(true);
+            dealCardTransform = dealCardTransformInit;
+            dealCardTransform.gameObject.SetActive(false);
+        });
+    }
+
+
+
 
     public void RegisterReveal(GridElement card)
     {
