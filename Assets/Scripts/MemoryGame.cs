@@ -18,7 +18,6 @@ public class MemoryGame : MonoBehaviour
     [Header("Animasyon Ayarları")]
     [Tooltip("Deste nesnesinin RectTransform'u")]
     public RectTransform dealCardTransform;
-    public RectTransform dealCardTransformInit;
     public RectTransform deckTransform;
     [Tooltip("Bir karta gitmesi gereken süre")]
     public float dealDuration = 0.5f;
@@ -28,6 +27,8 @@ public class MemoryGame : MonoBehaviour
     [Header("Ses Ayarları")]
     [Tooltip("Kart dağıtma sesi")]
     public AudioSource audioSource;
+    public AudioClip dealCardSound;
+    public AudioClip matchSound;
 
     [Header("Kontrol Ayarları")]
     [Tooltip("Kartlar eşleşmezse kaç saniye sonra kapanacak?")]
@@ -46,10 +47,7 @@ public class MemoryGame : MonoBehaviour
 
     private Coroutine firstRevealTimeoutCoroutine;
 
-    private void Start()
-    {
-        dealCardTransformInit = dealCardTransform;
-    }
+    
 
     public void SetupGame()
     {
@@ -133,10 +131,12 @@ public class MemoryGame : MonoBehaviour
                 PlayCardDealSound();
 
                 dealCardTransform.position = deckTransform.position;
+                dealCardTransform.DORotateQuaternion(cardRect.rotation, dealDuration);
                 dealCardTransform.DOMove(cardRect.position, dealDuration)
                     .OnComplete(() => {
                         // Kart görünür hale getir
                         cards[index].ChangeStatusAsBack();
+
                     });
             });
 
@@ -146,7 +146,8 @@ public class MemoryGame : MonoBehaviour
         seq.OnComplete(() => {
             deckTransform.gameObject.SetActive(false);
             ResetButton.SetActive(true);
-            dealCardTransform = dealCardTransformInit;
+
+            dealCardTransform.position = dealCardTransform.position;
             LoadImages();
         });
     }
@@ -155,9 +156,21 @@ public class MemoryGame : MonoBehaviour
     {
         if (audioSource != null)
         {
+            GetComponent<AudioSource>().clip = dealCardSound;
             audioSource.Play();
         }
     }
+
+    void PlayCardMatchSound()
+    {
+        if (audioSource != null)
+        {
+            GetComponent<AudioSource>().clip = matchSound;
+            audioSource.Play();
+        }
+    }
+
+    
 
     void LoadImages()
     {
@@ -198,7 +211,38 @@ public class MemoryGame : MonoBehaviour
         }
     }
 
-    
+    void GoToURL(string url)
+    {
+        // URL'nin geçerli olup olmadığını kontrol et
+        if (string.IsNullOrEmpty(url))
+        {
+            Debug.LogWarning("URL boş veya null!");
+            return;
+        }
+
+        // URL'nin http veya https ile başlayıp başlamadığını kontrol et
+        if (!url.StartsWith("http://") && !url.StartsWith("https://"))
+        {
+            url = "https://" + url;
+            Debug.Log("URL'ye https:// eklendi: " + url);
+        }
+
+        try
+        {
+            // URL'yi varsayılan tarayıcıda aç
+            Application.OpenURL(url);
+            Debug.Log("URL açılıyor: " + url);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("URL açılırken hata oluştu: " + e.Message);
+        }
+    }
+
+    public void GoToDonate()
+    {
+        GoToURL("https://www.stjude.org/donate/donate-to-st-jude.html");
+    }
 
 
     public void RegisterReveal(GridElement card)
@@ -265,6 +309,8 @@ public class MemoryGame : MonoBehaviour
 
             cards.Remove(first);
             cards.Remove(second);
+
+            PlayCardMatchSound();
 
             if (cards.Count == 0)
             {

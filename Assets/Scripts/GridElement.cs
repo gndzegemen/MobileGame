@@ -10,6 +10,8 @@ public class GridElement : MonoBehaviour
     public string ID;
     public MemoryGame memoryGame;
 
+    public AudioSource audioSource;
+
     [Header("UI Referansları")]
     public Button button;
     public GameObject Front;
@@ -36,6 +38,7 @@ public class GridElement : MonoBehaviour
         Back.SetActive(false);
         Empty.SetActive(false);
         CurrentState = State.Front;
+        audioSource.Play();
         
     }
 
