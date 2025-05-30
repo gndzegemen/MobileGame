@@ -5,6 +5,8 @@ using UnityEngine;
 using DG.Tweening;
 using UnityEngine.UI;
 using static UnityEngine.GraphicsBuffer;
+using System.Xml.Serialization;
+using Unity.VisualScripting.Antlr3.Runtime.Tree;
 
 public class MemoryGame : MonoBehaviour
 {
@@ -15,7 +17,6 @@ public class MemoryGame : MonoBehaviour
 
     [Header("Animasyon Ayarları")]
     [Tooltip("Deste nesnesinin RectTransform'u")]
-
     public RectTransform dealCardTransform;
     public RectTransform dealCardTransformInit;
     public RectTransform deckTransform;
@@ -23,6 +24,10 @@ public class MemoryGame : MonoBehaviour
     public float dealDuration = 0.5f;
     [Tooltip("Kartlar arası gecikme (s)")]
     public float dealStagger = 0.1f;
+
+    [Header("Ses Ayarları")]
+    [Tooltip("Kart dağıtma sesi")]
+    public AudioSource audioSource;
 
     [Header("Kontrol Ayarları")]
     [Tooltip("Kartlar eşleşmezse kaç saniye sonra kapanacak?")]
@@ -100,15 +105,19 @@ public class MemoryGame : MonoBehaviour
             cards.Add(element);
         }
 
-        //deckTransform.gameObject.SetActive(true);
-        //ResetButton.SetActive(false);
-        //dealCardTransform.gameObject.SetActive(true);
+        
 
         DealAnimation();
     }
 
+    
+
     void DealAnimation()
     {
+        deckTransform.gameObject.SetActive(true);
+        ResetButton.SetActive(false);
+        
+
         Sequence seq = DOTween.Sequence();
 
         for (int i = 0; i < cards.Count; i++)
@@ -116,8 +125,13 @@ public class MemoryGame : MonoBehaviour
             int index = i; // Closure için gerekli
             RectTransform cardRect = cards[i].GetComponent<RectTransform>();
 
+            
+
             seq.AppendCallback(() => {
                 // Deste pozisyonundan kart pozisyonuna git
+
+                PlayCardDealSound();
+
                 dealCardTransform.position = deckTransform.position;
                 dealCardTransform.DOMove(cardRect.position, dealDuration)
                     .OnComplete(() => {
@@ -133,11 +147,58 @@ public class MemoryGame : MonoBehaviour
             deckTransform.gameObject.SetActive(false);
             ResetButton.SetActive(true);
             dealCardTransform = dealCardTransformInit;
-            dealCardTransform.gameObject.SetActive(false);
+            LoadImages();
         });
     }
 
+    void PlayCardDealSound()
+    {
+        if (audioSource != null)
+        {
+            audioSource.Play();
+        }
+    }
 
+    void LoadImages()
+    {
+        Sprite[] cardSprites = Resources.LoadAll<Sprite>("CardIcons");
+
+        // ID'leri benzersiz olarak topla
+        List<string> uniqueIDs = new List<string>();
+        foreach (var card in cards)
+        {
+            if (!uniqueIDs.Contains(card.ID))
+            {
+                uniqueIDs.Add(card.ID);
+            }
+        }
+
+        // Her benzersiz ID için bir resim indexi belirle
+        Dictionary<string, Sprite> idToSprite = new Dictionary<string, Sprite>();
+        for (int i = 0; i < uniqueIDs.Count; i++)
+        {
+            if (i < cardSprites.Length)
+            {
+                idToSprite[uniqueIDs[i]] = cardSprites[i];
+            }
+            else
+            {
+                // Eğer yeterli resim yoksa, mevcut resimleri tekrar kullan
+                idToSprite[uniqueIDs[i]] = cardSprites[i % cardSprites.Length];
+            }
+        }
+
+        // Her karta ID'sine göre resim ata
+        foreach (var card in cards)
+        {
+            if (idToSprite.ContainsKey(card.ID))
+            {
+                card.image.sprite = idToSprite[card.ID];
+            }
+        }
+    }
+
+    
 
 
     public void RegisterReveal(GridElement card)
@@ -209,7 +270,7 @@ public class MemoryGame : MonoBehaviour
             {
                 MainPage.gameObject.SetActive(false);
                 FinishPage.gameObject.SetActive(true);
-                ResetGame();
+                
             }
         }
         else
@@ -243,5 +304,17 @@ public class MemoryGame : MonoBehaviour
 
         // Yeniden kurulum
         SetupGame();
+    }
+
+    public void QuitGame()
+    {
+        // Oyun verilerini kaydet
+        // SaveGame();
+
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 }

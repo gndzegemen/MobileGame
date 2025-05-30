@@ -15,6 +15,7 @@ public class GridElement : MonoBehaviour
     public GameObject Front;
     public GameObject Back;
     public GameObject Empty;
+    public Image image;
 
     public bool isReveal = false;
     public State CurrentState = State.Back;
